@@ -67,7 +67,7 @@ class Lexer(
             '|' -> this.createToken(if (this.match('|')) TokenType.OR else TokenType.BIT_OR)
             '"' -> this.createString()
             in '0'..'9' -> this.createNumber()
-            in 'a'..'z', in 'A'..'z' -> this.createIdentifier()
+            in 'a'..'z', in 'A'..'Z' -> this.createIdentifier()
             else -> Token(TokenType.ERROR, "Unexpected character $char", line, null)
         }
     }

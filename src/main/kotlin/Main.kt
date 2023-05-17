@@ -32,12 +32,11 @@ fun runREPL() {
 
 fun String.eval(): Boolean {
     val lexer = Lexer(this)
-    var ret = false
-    for (token in lexer.tokens) {
-        println(token)
-        if (token.type == TokenType.ERROR) {
-            ret = true
-        }
-    }
-    return ret
+    val parser = Parser(lexer.tokens)
+    val ast = parser.parse()
+
+    return ast?.let {
+        println(Interpreter.interpret(it))
+        false
+    } ?: true
 }
