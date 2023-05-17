@@ -1,5 +1,7 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
-    kotlin("jvm") version "1.8.0"
+    kotlin("jvm") version "1.8.21"
     application
 }
 
@@ -20,6 +22,11 @@ tasks.test {
 
 kotlin {
     jvmToolchain(8)
+}
+
+tasks.withType<KotlinCompile> {
+    kotlinOptions.languageVersion = "1.9"
+    kotlinOptions.freeCompilerArgs += listOf("-Xcontext-receivers")
 }
 
 application {
