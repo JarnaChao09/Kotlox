@@ -17,7 +17,31 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun expression(): AST {
-        return term()
+        return equality()
+    }
+
+    private fun equality(): AST {
+        var expr = comparison()
+
+        while (match(TokenType.NOT_EQ, TokenType.EQUALS)) {
+            val operator = this.previous()
+            val right = comparison()
+            expr = Binary(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private fun comparison(): AST {
+        var expr = term()
+
+        while (match(TokenType.GE, TokenType.GT, TokenType.LE, TokenType.LT)) {
+            val operator = this.previous()
+            val right = term()
+            expr = Binary(expr, operator, right)
+        }
+
+        return expr
     }
 
     private fun term(): AST {
@@ -45,7 +69,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun unary(): AST {
-        if (match(TokenType.PLUS, TokenType.MINUS)) {
+        if (match(TokenType.PLUS, TokenType.MINUS, TokenType.NOT)) {
             val operator = this.previous()
             return Unary(operator, unary())
         }
