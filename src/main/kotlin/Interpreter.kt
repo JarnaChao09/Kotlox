@@ -1,6 +1,12 @@
-object Interpreter : ExprAST.Visitor<Any> {
-    fun interpret(ast: ExprAST): Any {
-        return ast.accept(this)
+object Interpreter : ExprAST.Visitor<Any>, StmtAST.Visitor<Unit> {
+    fun interpret(ast: List<StmtAST>) {
+        ast.forEach {
+            it.execute()
+        }
+    }
+
+    private fun StmtAST.execute() {
+        this.accept(this@Interpreter)
     }
 
     private fun ExprAST.evaluate(): Any {
@@ -35,12 +41,23 @@ object Interpreter : ExprAST.Visitor<Any> {
                 } ?: error("Unhandled binary operator ${ast.operator}")
             }
             is Literal -> {
-                ast.value as Double
+                ast.value!!
             }
             is Unary -> {
                 unaryHandler[ast.operator.type]?.let {
                     it(ast.expr.evaluate())
                 } ?: error("Unhandled unary operator ${ast.operator}")
+            }
+        }
+    }
+
+    override fun visit(ast: StmtAST) {
+        when (ast) {
+            is Expression -> {
+                ast.expr.evaluate()
+            }
+            is Print -> {
+                ast.expr.evaluate().also(::println)
             }
         }
     }

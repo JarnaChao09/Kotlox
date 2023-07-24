@@ -1,18 +1,31 @@
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 
-    fun parse(): ExprAST? {
-        return try {
-            val expr = this.expression()
-
-            if (this.peek().type != TokenType.EOF) {
-                error("Invalid Expression")
+    fun parse(): List<StmtAST> {
+        return buildList {
+            while (!this@Parser.isAtEnd()) {
+                add(this@Parser.statement())
             }
+        }
+    }
 
-            expr
-        } catch (e: Exception) {
-            println("[ERROR]: ${e.message}")
-            null
+    private fun statement(): StmtAST {
+        return if (match(TokenType.PRINT)) {
+            this.printStatement()
+        } else {
+            this.expressionStatement()
+        }
+    }
+
+    private fun printStatement(): StmtAST {
+        return Print(expression()).also {
+            expect(TokenType.EOS, "Expected a ';' after value")
+        }
+    }
+
+    private fun expressionStatement(): StmtAST {
+        return Expression(expression()).also {
+            expect(TokenType.EOS, "Expected a ';' after value")
         }
     }
 
@@ -79,7 +92,9 @@ class Parser(private val tokens: List<Token>) {
 
     private fun atom(): ExprAST {
         return when {
-            match(TokenType.NUMBER) -> Literal(this.previous().literal)
+            match(TokenType.TRUE) -> Literal(true)
+            match(TokenType.FALSE) -> Literal(false)
+            match(TokenType.NUMBER, TokenType.STRING) -> Literal(this.previous().literal)
             match(TokenType.LEFT_PAREN) -> {
                 val expr = expression()
                 expect(TokenType.RIGHT_PAREN, "Expecting ')' after expression")

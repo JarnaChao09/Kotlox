@@ -20,20 +20,19 @@ private val defaultKeywords: Map<String, TokenType> = mapOf(
 class Lexer(
     private val source: String,
     private val keywords: Map<String, TokenType> = defaultKeywords,
-    private val backing: MutableList<Token> = mutableListOf()
+    private val backing: MutableList<Token> = mutableListOf(),
 ) {
     private var start: Int = 0
     private var current: Int = 0
     private var line = 1
 
-    val tokens: List<Token>
-        get() {
-            do {
-                this.backing += this.nextToken()
-            } while (this.backing.last().type != TokenType.EOF)
+    val tokens: List<Token> by lazy {
+        do {
+            this.backing += this.nextToken()
+        } while (this.backing.last().type != TokenType.EOF)
 
-            return this.backing.toList()
-        }
+        this.backing.toList()
+    }
 
     private fun nextToken(): Token {
         this.skipWhitespace()
@@ -54,7 +53,7 @@ class Lexer(
             ',' -> this.createToken(TokenType.COMMA)
             '.' -> this.createToken(TokenType.DOT)
             ';' -> this.createToken(TokenType.EOS)
-            '\n' -> Token(TokenType.EOS, "\\n", line++, null)
+//            '\n' -> Token(TokenType.EOS, "\\n", line++, null)
             '+' -> this.createToken(TokenType.PLUS)
             '-' -> this.createToken(TokenType.MINUS)
             '*' -> this.createToken(TokenType.STAR)
@@ -85,6 +84,11 @@ class Lexer(
                     } else {
                         return
                     }
+                }
+
+                '\n' -> {
+                    this.line++
+                    this.advance()
                 }
 
                 else -> return
