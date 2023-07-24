@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalStdlibApi::class)
-
 private val defaultKeywords: Map<String, TokenType> = mapOf(
     "var" to TokenType.VAR,
     "val" to TokenType.VAL,
@@ -30,16 +28,19 @@ class Lexer(
 
     val tokens: List<Token>
         get() {
-            while (!this.isAtEnd()) {
-                backing += this.nextToken()
-            }
+            do {
+                this.backing += this.nextToken()
+            } while (this.backing.last().type != TokenType.EOF)
 
-            backing += Token(TokenType.EOF, "", line, null)
             return this.backing.toList()
         }
 
     private fun nextToken(): Token {
         this.skipWhitespace()
+
+        if (this.isAtEnd()) {
+            return Token(TokenType.EOF, "", line, null)
+        }
 
         this.start = this.current
 
@@ -61,8 +62,8 @@ class Lexer(
             '%' -> this.createToken(TokenType.MOD)
             '!' -> this.createToken(if (this.match('=')) TokenType.NOT_EQ else TokenType.NOT)
             '=' -> this.createToken(if (this.match('=')) TokenType.EQUALS else TokenType.ASSIGN)
-            '>' -> this.createToken(if (this.match('=')) TokenType.LE else TokenType.LT)
-            '<' -> this.createToken(if (this.match('=')) TokenType.GE else TokenType.GT)
+            '>' -> this.createToken(if (this.match('=')) TokenType.GE else TokenType.GT)
+            '<' -> this.createToken(if (this.match('=')) TokenType.LE else TokenType.LT)
             '&' -> this.createToken(if (this.match('&')) TokenType.AND else TokenType.BIT_AND)
             '|' -> this.createToken(if (this.match('|')) TokenType.OR else TokenType.BIT_OR)
             '"' -> this.createString()

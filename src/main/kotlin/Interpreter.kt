@@ -1,9 +1,9 @@
-object Interpreter : AST.Visitor<Any> {
-    fun interpret(ast: AST): Any {
+object Interpreter : ExprAST.Visitor<Any> {
+    fun interpret(ast: ExprAST): Any {
         return ast.accept(this)
     }
 
-    private fun AST.evaluate(): Any {
+    private fun ExprAST.evaluate(): Any {
         return this.accept(this@Interpreter)
     }
 
@@ -27,7 +27,7 @@ object Interpreter : AST.Visitor<Any> {
         TokenType.LT to { l, r -> (l as Double) < (r as Double) },
     )
 
-    override fun visit(ast: AST): Any {
+    override fun visit(ast: ExprAST): Any {
         return when (ast) {
             is Binary -> {
                 binaryHandler[ast.operator.type]?.let {

@@ -35,6 +35,8 @@ fun String.eval(): Boolean {
     val parser = Parser(lexer.tokens)
     val ast = parser.parse()
 
+    println("[AST]: $ast")
+
     return ast?.let {
         println(Interpreter.interpret(it))
         false

@@ -1,7 +1,7 @@
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 
-    fun parse(): AST? {
+    fun parse(): ExprAST? {
         return try {
             val expr = this.expression()
 
@@ -16,11 +16,11 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    private fun expression(): AST {
+    private fun expression(): ExprAST {
         return equality()
     }
 
-    private fun equality(): AST {
+    private fun equality(): ExprAST {
         var expr = comparison()
 
         while (match(TokenType.NOT_EQ, TokenType.EQUALS)) {
@@ -32,7 +32,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
-    private fun comparison(): AST {
+    private fun comparison(): ExprAST {
         var expr = term()
 
         while (match(TokenType.GE, TokenType.GT, TokenType.LE, TokenType.LT)) {
@@ -44,7 +44,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
-    private fun term(): AST {
+    private fun term(): ExprAST {
         var expr = factor()
 
         while (match(TokenType.PLUS, TokenType.MINUS)) {
@@ -56,7 +56,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
-    private fun factor(): AST {
+    private fun factor(): ExprAST {
         var expr = unary()
 
         while (match(TokenType.STAR, TokenType.SLASH, TokenType.MOD)) {
@@ -68,7 +68,7 @@ class Parser(private val tokens: List<Token>) {
         return expr
     }
 
-    private fun unary(): AST {
+    private fun unary(): ExprAST {
         if (match(TokenType.PLUS, TokenType.MINUS, TokenType.NOT)) {
             val operator = this.previous()
             return Unary(operator, unary())
@@ -77,7 +77,7 @@ class Parser(private val tokens: List<Token>) {
         return atom()
     }
 
-    private fun atom(): AST {
+    private fun atom(): ExprAST {
         return when {
             match(TokenType.NUMBER) -> Literal(this.previous().literal)
             match(TokenType.LEFT_PAREN) -> {
