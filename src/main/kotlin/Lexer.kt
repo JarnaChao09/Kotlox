@@ -20,18 +20,17 @@ private val defaultKeywords: Map<String, TokenType> = mapOf(
 class Lexer(
     private val source: String,
     private val keywords: Map<String, TokenType> = defaultKeywords,
-    private val backing: MutableList<Token> = mutableListOf(),
 ) {
     private var start: Int = 0
     private var current: Int = 0
     private var line = 1
 
     val tokens: List<Token> by lazy {
-        do {
-            this.backing += this.nextToken()
-        } while (this.backing.last().type != TokenType.EOF)
-
-        this.backing.toList()
+        buildList {
+            do {
+                add(this@Lexer.nextToken())
+            } while (last().type != TokenType.EOF)
+        }
     }
 
     private fun nextToken(): Token {
