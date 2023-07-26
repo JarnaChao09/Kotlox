@@ -57,7 +57,26 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun expression(): ExprAST {
-        return equality()
+        return assignment()
+    }
+
+    private fun assignment(): ExprAST {
+        val expr = equality()
+
+        if (match(TokenType.ASSIGN)) {
+            val equals = previous()
+            val value = assignment()
+
+            if (expr is Variable) {
+                val name = expr.name
+                return Assign(name, value)
+            }
+
+            // todo: don't throw here when parser synchronization is implemented
+            error("Error @ ${equals.line}: Invalid Assignment Target.")
+        }
+
+        return expr
     }
 
     private fun equality(): ExprAST {

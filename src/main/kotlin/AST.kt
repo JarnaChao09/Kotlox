@@ -8,11 +8,13 @@ sealed interface ExprAST {
     }
 }
 
+data class Assign(val name: Token, val expression: ExprAST) : ExprAST
+
+data class Binary(val left: ExprAST, val operator: Token, val right: ExprAST) : ExprAST
+
 data class Literal(val value: Any?) : ExprAST
 
 data class Unary(val operator: Token, val expr: ExprAST) : ExprAST
-
-data class Binary(val left: ExprAST, val operator: Token, val right: ExprAST) : ExprAST
 
 data class Variable(val name: Token) : ExprAST
 

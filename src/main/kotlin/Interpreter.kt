@@ -42,16 +42,25 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                     it(ast.left.evaluate()!!, ast.right.evaluate()!!)
                 } ?: error("Unhandled binary operator ${ast.operator}")
             }
+
             is Literal -> {
                 ast.value!!
             }
+
             is Unary -> {
                 unaryHandler[ast.operator.type]?.let {
                     it(ast.expr.evaluate()!!)
                 } ?: error("Unhandled unary operator ${ast.operator}")
             }
+
             is Variable -> {
                 environment[ast.name]
+            }
+
+            is Assign -> {
+                ast.expression.evaluate().also {
+                    environment[ast.name] = it
+                }
             }
         }
     }
@@ -61,9 +70,11 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             is Expression -> {
                 ast.expr.evaluate()
             }
+
             is Print -> {
                 ast.expr.evaluate().also(::println)
             }
+
             is VarStmt -> {
                 environment[ast.name.lexeme] = ast.initializer?.evaluate()
             }
