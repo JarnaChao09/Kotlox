@@ -1,12 +1,39 @@
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 
-    fun parse(): List<StmtAST> {
+    fun parse(): List<StmtAST?> {
         return buildList {
             while (!this@Parser.isAtEnd()) {
-                add(this@Parser.statement())
+                add(this@Parser.declaration())
             }
         }
+    }
+
+    private fun declaration(): StmtAST? {
+        return try {
+            if (match(TokenType.VAR, TokenType.VAL)) {
+                this.variableDeclaration()
+            } else {
+                this.statement()
+            }
+        } catch (err: IllegalStateException) {
+            null
+        }
+    }
+
+    private fun variableDeclaration(): StmtAST {
+        val type = this.previous().type
+        val name = expect(TokenType.IDENTIFIER, "Expected a variable name")
+
+        val initializer = if (match(TokenType.ASSIGN)) {
+            expression()
+        } else {
+            null
+        }
+
+        expect(TokenType.EOS, "Expect ';' after variable declaration")
+
+        return VarStmt(type, name, initializer)
     }
 
     private fun statement(): StmtAST {
@@ -94,6 +121,7 @@ class Parser(private val tokens: List<Token>) {
         return when {
             match(TokenType.TRUE) -> Literal(true)
             match(TokenType.FALSE) -> Literal(false)
+            match(TokenType.IDENTIFIER) -> Variable(this.previous())
             match(TokenType.NUMBER, TokenType.STRING) -> Literal(this.previous().literal)
             match(TokenType.LEFT_PAREN) -> {
                 val expr = expression()

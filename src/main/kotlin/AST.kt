@@ -14,6 +14,8 @@ data class Unary(val operator: Token, val expr: ExprAST) : ExprAST
 
 data class Binary(val left: ExprAST, val operator: Token, val right: ExprAST) : ExprAST
 
+data class Variable(val name: Token) : ExprAST
+
 sealed interface StmtAST {
     interface Visitor<R> {
         fun visit(ast: StmtAST): R
@@ -27,3 +29,23 @@ sealed interface StmtAST {
 data class Expression(val expr: ExprAST) : StmtAST
 
 data class Print(val expr: ExprAST) : StmtAST
+
+sealed interface VarStmt : StmtAST {
+    val name: Token
+
+    val initializer: ExprAST?
+
+    companion object {
+        operator fun invoke(type: TokenType, name: Token, init: ExprAST?): VarStmt {
+            return when (type) {
+                TokenType.VAL -> Val(name, init)
+                TokenType.VAR -> Var(name, init)
+                else -> error("unreachable: should only be triggered with val/var")
+            }
+        }
+    }
+}
+
+data class Var(override val name: Token, override val initializer: ExprAST?) : VarStmt
+
+data class Val(override val name: Token, override val initializer: ExprAST?) : VarStmt

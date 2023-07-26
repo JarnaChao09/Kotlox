@@ -1,7 +1,9 @@
-object Interpreter : ExprAST.Visitor<Any>, StmtAST.Visitor<Unit> {
-    fun interpret(ast: List<StmtAST>) {
+object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
+    private val environment: Environment = Environment()
+
+    fun interpret(ast: List<StmtAST?>) {
         ast.forEach {
-            it.execute()
+            it?.execute()
         }
     }
 
@@ -9,7 +11,7 @@ object Interpreter : ExprAST.Visitor<Any>, StmtAST.Visitor<Unit> {
         this.accept(this@Interpreter)
     }
 
-    private fun ExprAST.evaluate(): Any {
+    private fun ExprAST.evaluate(): Any? {
         return this.accept(this@Interpreter)
     }
 
@@ -33,11 +35,11 @@ object Interpreter : ExprAST.Visitor<Any>, StmtAST.Visitor<Unit> {
         TokenType.LT to { l, r -> (l as Double) < (r as Double) },
     )
 
-    override fun visit(ast: ExprAST): Any {
+    override fun visit(ast: ExprAST): Any? {
         return when (ast) {
             is Binary -> {
                 binaryHandler[ast.operator.type]?.let {
-                    it(ast.left.evaluate(), ast.right.evaluate())
+                    it(ast.left.evaluate()!!, ast.right.evaluate()!!)
                 } ?: error("Unhandled binary operator ${ast.operator}")
             }
             is Literal -> {
@@ -45,8 +47,11 @@ object Interpreter : ExprAST.Visitor<Any>, StmtAST.Visitor<Unit> {
             }
             is Unary -> {
                 unaryHandler[ast.operator.type]?.let {
-                    it(ast.expr.evaluate())
+                    it(ast.expr.evaluate()!!)
                 } ?: error("Unhandled unary operator ${ast.operator}")
+            }
+            is Variable -> {
+                environment[ast.name]
             }
         }
     }
@@ -58,6 +63,9 @@ object Interpreter : ExprAST.Visitor<Any>, StmtAST.Visitor<Unit> {
             }
             is Print -> {
                 ast.expr.evaluate().also(::println)
+            }
+            is VarStmt -> {
+                environment[ast.name.lexeme] = ast.initializer?.evaluate()
             }
         }
     }

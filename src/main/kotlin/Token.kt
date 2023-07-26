@@ -1,5 +1,5 @@
-data class Token(val type: TokenType, val lexme: String, val line: Int, val literal: Any?) {
-    override fun toString(): String = "$type \"$lexme\" @ $line${literal?.let { " $literal" } ?: ""}"
+data class Token(val type: TokenType, val lexeme: String, val line: Int, val literal: Any?) {
+    override fun toString(): String = "$type \"$lexeme\" @ $line${literal?.let { " $literal" } ?: ""}"
 }
 
 enum class TokenType {
