@@ -1,5 +1,5 @@
 object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
-    private val environment: Environment = Environment()
+    private var environment: Environment = Environment()
 
     fun interpret(ast: List<StmtAST?>) {
         ast.forEach {
@@ -77,6 +77,19 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
 
             is VarStmt -> {
                 environment[ast.name.lexeme] = ast.initializer?.evaluate()
+            }
+
+            is Block -> {
+                val previous = this.environment
+                try {
+                    this.environment = Environment(this.environment)
+
+                    ast.statements.forEach {
+                        it?.execute()
+                    }
+                } finally {
+                    this.environment = previous
+                }
             }
         }
     }

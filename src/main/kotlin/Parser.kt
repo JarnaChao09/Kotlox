@@ -39,6 +39,8 @@ class Parser(private val tokens: List<Token>) {
     private fun statement(): StmtAST {
         return if (match(TokenType.PRINT)) {
             this.printStatement()
+        } else if (match(TokenType.LEFT_BRACE)) {
+            Block(this.block())
         } else {
             this.expressionStatement()
         }
@@ -53,6 +55,16 @@ class Parser(private val tokens: List<Token>) {
     private fun expressionStatement(): StmtAST {
         return Expression(expression()).also {
             expect(TokenType.EOS, "Expected a ';' after value")
+        }
+    }
+
+    private fun block(): List<StmtAST?> {
+        return buildList {
+            while (!checkCurrent(TokenType.RIGHT_BRACE) && !this@Parser.isAtEnd()) {
+                add(declaration())
+            }
+
+            expect(TokenType.RIGHT_BRACE, "Expect '}' after a block")
         }
     }
 
@@ -147,6 +159,7 @@ class Parser(private val tokens: List<Token>) {
                 expect(TokenType.RIGHT_PAREN, "Expecting ')' after expression")
                 expr
             }
+
             else -> error("Invalid expression")
         }
     }

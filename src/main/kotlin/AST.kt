@@ -28,6 +28,8 @@ sealed interface StmtAST {
     }
 }
 
+data class Block(val statements: List<StmtAST?>) : StmtAST
+
 data class Expression(val expr: ExprAST) : StmtAST
 
 data class Print(val expr: ExprAST) : StmtAST
