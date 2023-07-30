@@ -57,3 +57,5 @@ sealed interface VarStmt : StmtAST {
 data class Var(override val name: Token, override val initializer: ExprAST?) : VarStmt
 
 data class Val(override val name: Token, override val initializer: ExprAST?) : VarStmt
+
+data class While(val condition: ExprAST, val body: StmtAST) : StmtAST

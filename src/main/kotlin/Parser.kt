@@ -41,6 +41,7 @@ class Parser(private val tokens: List<Token>) {
         return when {
             match(TokenType.IF) -> ifStatement()
             match(TokenType.PRINT) -> printStatement()
+            match(TokenType.WHILE) -> whileStatement()
             match(TokenType.LEFT_BRACE) -> Block(block())
             else -> expressionStatement()
         }
@@ -73,6 +74,18 @@ class Parser(private val tokens: List<Token>) {
         return Print(expression()).also {
             expect(TokenType.EOS, "Expected a ';' after value")
         }
+    }
+
+    private fun whileStatement(): StmtAST {
+        expect(TokenType.LEFT_PAREN, "Expect '(' after 'while'")
+
+        val condition = expression()
+
+        expect(TokenType.RIGHT_PAREN, "Expect ')' after 'while' condition")
+
+        val body = statement()
+
+        return While(condition, body)
     }
 
     private fun block(): List<StmtAST?> {

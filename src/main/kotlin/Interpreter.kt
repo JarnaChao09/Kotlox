@@ -126,6 +126,12 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                     ast.falseBranch?.execute()
                 }
             }
+
+            is While -> {
+                while (ast.condition.evaluate()!!.isTruthy()) {
+                    ast.body.execute()
+                }
+            }
         }
     }
 }
