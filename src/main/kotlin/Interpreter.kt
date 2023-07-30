@@ -91,6 +91,14 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                     this.environment = previous
                 }
             }
+
+            is If -> {
+                if (ast.condition.evaluate() as Boolean) {
+                    ast.trueBranch.execute()
+                } else {
+                    ast.falseBranch?.execute()
+                }
+            }
         }
     }
 }

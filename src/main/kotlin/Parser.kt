@@ -37,23 +37,39 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun statement(): StmtAST {
-        return if (match(TokenType.PRINT)) {
-            this.printStatement()
-        } else if (match(TokenType.LEFT_BRACE)) {
-            Block(this.block())
-        } else {
-            this.expressionStatement()
-        }
-    }
-
-    private fun printStatement(): StmtAST {
-        return Print(expression()).also {
-            expect(TokenType.EOS, "Expected a ';' after value")
+        return when {
+            match(TokenType.IF) -> ifStatement()
+            match(TokenType.PRINT) -> printStatement()
+            match(TokenType.LEFT_BRACE) -> Block(block())
+            else -> expressionStatement()
         }
     }
 
     private fun expressionStatement(): StmtAST {
         return Expression(expression()).also {
+            expect(TokenType.EOS, "Expected a ';' after value")
+        }
+    }
+
+    private fun ifStatement(): StmtAST {
+        expect(TokenType.LEFT_PAREN, "Expect a '(' after 'if'")
+
+        val condition = expression()
+
+        expect(TokenType.RIGHT_PAREN, "Expect a ')' after 'if' condition")
+
+        val trueBranch = statement()
+        val falseBranch = if (match(TokenType.ELSE)) {
+            statement()
+        } else {
+            null
+        }
+
+        return If(condition, trueBranch, falseBranch)
+    }
+
+    private fun printStatement(): StmtAST {
+        return Print(expression()).also {
             expect(TokenType.EOS, "Expected a ';' after value")
         }
     }

@@ -32,6 +32,8 @@ data class Block(val statements: List<StmtAST?>) : StmtAST
 
 data class Expression(val expr: ExprAST) : StmtAST
 
+data class If(val condition: ExprAST, val trueBranch: StmtAST, val falseBranch: StmtAST?) : StmtAST
+
 data class Print(val expr: ExprAST) : StmtAST
 
 sealed interface VarStmt : StmtAST {
