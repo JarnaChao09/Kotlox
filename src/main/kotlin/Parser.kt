@@ -39,6 +39,7 @@ class Parser(private val tokens: List<Token>) {
 
     private fun statement(): StmtAST {
         return when {
+            match(TokenType.FOR) -> forStatement()
             match(TokenType.IF) -> ifStatement()
             match(TokenType.PRINT) -> printStatement()
             match(TokenType.WHILE) -> whileStatement()
@@ -51,6 +52,46 @@ class Parser(private val tokens: List<Token>) {
         return Expression(expression()).also {
             expect(TokenType.EOS, "Expected a ';' after value")
         }
+    }
+
+    private fun forStatement(): StmtAST {
+        expect(TokenType.LEFT_PAREN, "Expect '(' after 'for'")
+
+        val initializer = if (match(TokenType.EOS)) {
+            null
+        } else if (match(TokenType.VAL, TokenType.VAR)) {
+            variableDeclaration()
+        } else {
+            expressionStatement()
+        }
+
+        val condition = if (!checkCurrent(TokenType.EOS)) {
+            expression()
+        } else {
+            Literal(true)
+        }
+        expect(TokenType.EOS, "Expect ';' after loop condition")
+
+        val increment = if (!checkCurrent(TokenType.RIGHT_PAREN)) {
+            expression()
+        } else {
+            null
+        }
+        expect(TokenType.RIGHT_PAREN, "Expect ')' after for clauses")
+
+        var body = statement()
+
+        increment?.let {
+            body = Block(listOf(body, Expression(increment)))
+        }
+
+        body = While(condition, body)
+
+        initializer?.let {
+            body = Block(listOf(initializer, body))
+        }
+
+        return body
     }
 
     private fun ifStatement(): StmtAST {
