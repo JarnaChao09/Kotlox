@@ -15,6 +15,17 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
         return this.accept(this@Interpreter)
     }
 
+    private fun Any?.isTruthy(): Boolean {
+        return this?.let {
+            when (it) {
+                is Boolean -> it
+                else -> true
+            }
+        } ?: false
+    }
+
+    private fun Any?.isNotTruthy(): Boolean = !isTruthy()
+
     private val unaryHandler: Map<TokenType, (Any) -> Any> = mapOf(
         TokenType.PLUS to { +(it as Double) },
         TokenType.MINUS to { -(it as Double) },
@@ -44,7 +55,23 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             }
 
             is Literal -> {
-                ast.value!!
+                ast.value
+            }
+
+            is Logical -> {
+                val left = ast.left.evaluate()
+
+                if (ast.operator.type == TokenType.OR) {
+                    if (left.isTruthy()) {
+                        return left
+                    }
+                } else {
+                    if (left.isNotTruthy()) {
+                        return left
+                    }
+                }
+
+                ast.right.evaluate()
             }
 
             is Unary -> {
@@ -93,7 +120,7 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             }
 
             is If -> {
-                if (ast.condition.evaluate() as Boolean) {
+                if (ast.condition.evaluate().isTruthy()) {
                     ast.trueBranch.execute()
                 } else {
                     ast.falseBranch?.execute()

@@ -1,0 +1,16 @@
+var a = true;
+var b = false;
+
+if (a && !b || a && b) {
+    print "is always true";
+} else {
+    print "unreachable";
+}
+
+var c = 25;
+
+if (20 <= c && c <= 30) {
+    print "c is in the range of 20 to 30";
+} else {
+    print "c is not in the range of 20 to 30";
+}

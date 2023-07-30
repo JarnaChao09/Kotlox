@@ -1,0 +1,5 @@
+print "hi" || 2;
+print null || "yes";
+
+print "should be 1" && 1 || 2;
+print null && 1 || 2;

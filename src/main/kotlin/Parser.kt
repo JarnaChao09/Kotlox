@@ -17,6 +17,7 @@ class Parser(private val tokens: List<Token>) {
                 this.statement()
             }
         } catch (err: IllegalStateException) {
+            println("[ERROR]: ${err.message}")
             null
         }
     }
@@ -89,7 +90,7 @@ class Parser(private val tokens: List<Token>) {
     }
 
     private fun assignment(): ExprAST {
-        val expr = equality()
+        val expr = or()
 
         if (match(TokenType.ASSIGN)) {
             val equals = previous()
@@ -102,6 +103,30 @@ class Parser(private val tokens: List<Token>) {
 
             // todo: don't throw here when parser synchronization is implemented
             error("Error @ ${equals.line}: Invalid Assignment Target.")
+        }
+
+        return expr
+    }
+
+    private fun or(): ExprAST {
+        var expr = and()
+
+        while (match(TokenType.OR)) {
+            val operator = this.previous()
+            val right = and()
+            expr = Logical(expr, operator, right)
+        }
+
+        return expr
+    }
+
+    private fun and(): ExprAST {
+        var expr = equality()
+
+        while (match(TokenType.AND)) {
+            val operator = this.previous()
+            val right = equality()
+            expr = Logical(expr, operator, right)
         }
 
         return expr
@@ -168,6 +193,7 @@ class Parser(private val tokens: List<Token>) {
         return when {
             match(TokenType.TRUE) -> Literal(true)
             match(TokenType.FALSE) -> Literal(false)
+            match(TokenType.NULL) -> Literal(null)
             match(TokenType.IDENTIFIER) -> Variable(this.previous())
             match(TokenType.NUMBER, TokenType.STRING) -> Literal(this.previous().literal)
             match(TokenType.LEFT_PAREN) -> {
