@@ -54,6 +54,10 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                 } ?: error("Unhandled binary operator ${ast.operator}")
             }
 
+            is Grouping -> {
+                ast.expr.evaluate()
+            }
+
             is Literal -> {
                 ast.value
             }

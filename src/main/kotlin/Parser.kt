@@ -253,7 +253,7 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.LEFT_PAREN) -> {
                 val expr = expression()
                 expect(TokenType.RIGHT_PAREN, "Expecting ')' after expression")
-                expr
+                Grouping(expr)
             }
 
             else -> error("Invalid expression")
