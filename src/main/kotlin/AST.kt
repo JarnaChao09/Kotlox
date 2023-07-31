@@ -12,6 +12,8 @@ data class Assign(val name: Token, val expression: ExprAST) : ExprAST
 
 data class Binary(val left: ExprAST, val operator: Token, val right: ExprAST) : ExprAST
 
+data class Call(val callee: ExprAST, val paren: Token, val arguments: List<ExprAST>) : ExprAST
+
 data class Grouping(val expr: ExprAST) : ExprAST
 
 data class Literal(val value: Any?) : ExprAST

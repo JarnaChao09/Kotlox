@@ -1,5 +1,19 @@
 object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
-    private var environment: Environment = Environment()
+    private val globals: Environment = Environment()
+    private var environment: Environment = globals
+
+    init {
+        globals["clock"] = object : LoxCallable {
+            override val arity: Int
+                get() = 0
+
+            override fun invoke(interpreter: Interpreter, arguments: List<Any?>): Any {
+                return System.currentTimeMillis() / 1000.0
+            }
+
+            override fun toString(): String = "<native function>"
+        }
+    }
 
     fun interpret(ast: List<StmtAST?>) {
         ast.forEach {
@@ -52,6 +66,22 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                 binaryHandler[ast.operator.type]?.let {
                     it(ast.left.evaluate()!!, ast.right.evaluate()!!)
                 } ?: error("Unhandled binary operator ${ast.operator}")
+            }
+
+            is Call -> {
+                val callee = ast.callee.evaluate()
+
+                val arguments = ast.arguments.map { it.evaluate() }
+
+                if (callee !is LoxCallable) {
+                    throw RuntimeException("Can only call functions and classes")
+                }
+
+                if (arguments.size != callee.arity) {
+                    throw RuntimeException("Expected ${callee.arity} arguments but got ${arguments.size}")
+                }
+
+                return callee(this, arguments)
             }
 
             is Grouping -> {

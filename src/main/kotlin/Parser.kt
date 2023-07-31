@@ -240,7 +240,36 @@ class Parser(private val tokens: List<Token>) {
             return Unary(operator, unary())
         }
 
-        return atom()
+        return call()
+    }
+
+    private fun call(): ExprAST {
+        var expr = atom()
+
+        while (true) {
+            if (match(TokenType.LEFT_PAREN)) {
+                expr = finishCall(expr)
+            } else {
+                break
+            }
+        }
+
+        return expr
+    }
+
+    private fun finishCall(callee: ExprAST): ExprAST {
+        val arguments = buildList {
+            if (!checkCurrent(TokenType.RIGHT_PAREN)) {
+                do {
+                    if (size >= 255) {
+                        error("Can't have more than 255 arguments")
+                    }
+                    add(expression())
+                } while (match(TokenType.COMMA))
+            }
+        }
+
+        return Call(callee, expect(TokenType.RIGHT_PAREN, "Expect ')' after arguments"), arguments)
     }
 
     private fun atom(): ExprAST {
