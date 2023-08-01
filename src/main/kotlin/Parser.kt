@@ -11,10 +11,10 @@ class Parser(private val tokens: List<Token>) {
 
     private fun declaration(): StmtAST? {
         return try {
-            if (match(TokenType.VAR, TokenType.VAL)) {
-                this.variableDeclaration()
-            } else {
-                this.statement()
+            when {
+                match(TokenType.VAR, TokenType.VAL) -> variableDeclaration()
+                match(TokenType.FUN) -> functionDeclaration("function")
+                else -> statement()
             }
         } catch (err: IllegalStateException) {
             println("[ERROR]: ${err.message}")
@@ -52,6 +52,27 @@ class Parser(private val tokens: List<Token>) {
         return Expression(expression()).also {
             expect(TokenType.EOS, "Expected a ';' after value")
         }
+    }
+
+    private fun functionDeclaration(kind: String): StmtAST {
+        val name = expect(TokenType.IDENTIFIER, "Expect $kind name")
+        expect(TokenType.LEFT_PAREN, "Expect '(' after $kind name")
+        val parameters = buildList {
+            if (!checkCurrent(TokenType.RIGHT_PAREN)) {
+                do {
+                    if (size >= 255) {
+                        error("Cant have more than 255 parameters")
+                    }
+
+                    add(expect(TokenType.IDENTIFIER, "Expected parameter name"))
+                } while (match(TokenType.COMMA))
+            }
+            expect(TokenType.RIGHT_PAREN, "Expect ')' after parameters")
+        }
+
+        expect(TokenType.LEFT_BRACE, "Expect '{' before $kind body")
+
+        return Function(name, parameters, block())
     }
 
     private fun forStatement(): StmtAST {

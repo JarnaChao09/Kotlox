@@ -1,5 +1,5 @@
 object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
-    private val globals: Environment = Environment()
+    val globals: Environment = Environment()
     private var environment: Environment = globals
 
     init {
@@ -18,6 +18,19 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
     fun interpret(ast: List<StmtAST?>) {
         ast.forEach {
             it?.execute()
+        }
+    }
+
+    fun executeBlock(statements: List<StmtAST?>, environment: Environment) {
+        val previous = this.environment
+        try {
+            this.environment = environment
+
+            statements.forEach {
+                it?.execute()
+            }
+        } finally {
+            this.environment = previous
         }
     }
 
@@ -47,7 +60,21 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
     )
 
     private val binaryHandler: Map<TokenType, (Any, Any) -> Any> = mapOf(
-        TokenType.PLUS to { l, r -> (l as Double) + (r as Double) },
+        TokenType.PLUS to { l, r ->
+            when (l) {
+                is String -> when (r) {
+                    is String -> l + r
+                    is Double -> error("Illegal type for right hand side, expected String")
+                    else -> error("Illegal type for right hand side, expected String")
+                }
+                is Double -> when (r) {
+                    is String -> error("Illegal type for right hand side, expected Double")
+                    is Double -> l + r
+                    else -> error("Illegal Type for right hande side, expected Double")
+                }
+                else -> error("Illegal Type for left hand side, expected (String | Double)")
+            }
+        },
         TokenType.MINUS to { l, r -> (l as Double) - (r as Double) },
         TokenType.STAR to { l, r -> (l as Double) * (r as Double) },
         TokenType.SLASH to { l, r -> (l as Double) / (r as Double) },
@@ -132,6 +159,11 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                 ast.expr.evaluate()
             }
 
+            is Function -> {
+                val function = LoxFunction(ast)
+                environment[ast.name.lexeme] = function
+            }
+
             is Print -> {
                 ast.expr.evaluate().also(::println)
             }
@@ -141,16 +173,7 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             }
 
             is Block -> {
-                val previous = this.environment
-                try {
-                    this.environment = Environment(this.environment)
-
-                    ast.statements.forEach {
-                        it?.execute()
-                    }
-                } finally {
-                    this.environment = previous
-                }
+                executeBlock(ast.statements, Environment(environment))
             }
 
             is If -> {

@@ -38,6 +38,8 @@ data class Block(val statements: List<StmtAST?>) : StmtAST
 
 data class Expression(val expr: ExprAST) : StmtAST
 
+data class Function(val name: Token, val params: List<Token>, val body: List<StmtAST?>) : StmtAST
+
 data class If(val condition: ExprAST, val trueBranch: StmtAST, val falseBranch: StmtAST?) : StmtAST
 
 data class Print(val expr: ExprAST) : StmtAST
