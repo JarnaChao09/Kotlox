@@ -189,6 +189,14 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                     ast.body.execute()
                 }
             }
+
+            is Return -> {
+                val value = ast.value?.let {
+                    it.evaluate()
+                }
+
+                throw LoxReturn(value)
+            }
         }
     }
 }

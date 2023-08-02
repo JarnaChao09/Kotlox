@@ -8,7 +8,12 @@ data class LoxFunction(private val declaration: Function) : LoxCallable {
             env[declaration.params[i].lexeme] = v
         }
 
-        interpreter.executeBlock(declaration.body, env)
+        try {
+            interpreter.executeBlock(declaration.body, env)
+        } catch (returnValue: LoxReturn) {
+            return returnValue.returnValue
+        }
+
         return null
     }
 }

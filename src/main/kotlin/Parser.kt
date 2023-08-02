@@ -42,6 +42,7 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.FOR) -> forStatement()
             match(TokenType.IF) -> ifStatement()
             match(TokenType.PRINT) -> printStatement()
+            match(TokenType.RETURN) -> returnStatement()
             match(TokenType.WHILE) -> whileStatement()
             match(TokenType.LEFT_BRACE) -> Block(block())
             else -> expressionStatement()
@@ -136,6 +137,18 @@ class Parser(private val tokens: List<Token>) {
         return Print(expression()).also {
             expect(TokenType.EOS, "Expected a ';' after value")
         }
+    }
+
+    private fun returnStatement(): StmtAST {
+        val keyword = this.previous()
+        val value = if (!checkCurrent(TokenType.EOS)) {
+            expression()
+        } else {
+            null
+        }
+
+        expect(TokenType.EOS, "Expect ';' after return value")
+        return Return(keyword, value)
     }
 
     private fun whileStatement(): StmtAST {

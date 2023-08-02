@@ -44,6 +44,8 @@ data class If(val condition: ExprAST, val trueBranch: StmtAST, val falseBranch: 
 
 data class Print(val expr: ExprAST) : StmtAST
 
+data class Return(val keyword: Token, val value: ExprAST?) : StmtAST
+
 sealed interface VarStmt : StmtAST {
     val name: Token
 
