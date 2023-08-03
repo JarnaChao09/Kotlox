@@ -160,7 +160,7 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             }
 
             is Function -> {
-                val function = LoxFunction(ast)
+                val function = LoxFunction(ast, environment)
                 environment[ast.name.lexeme] = function
             }
 
@@ -191,9 +191,7 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             }
 
             is Return -> {
-                val value = ast.value?.let {
-                    it.evaluate()
-                }
+                val value = ast.value?.evaluate()
 
                 throw LoxReturn(value)
             }
