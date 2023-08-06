@@ -1,0 +1,30 @@
+var n = 10;
+
+var n1 = 1;
+
+for (var i = 0; i < n; i = i + 1) {
+    n1 = n1 * (i + 1);
+}
+
+var n2 = 1;
+
+var j = 0;
+while (j < n) {
+    j = j + 1;
+    n2 = n2 * j;
+}
+
+fun fac(n) {
+    if (n == 1) return n;
+    return n * fac(n - 1);
+}
+
+var n3 = fac(n);
+
+print n1;
+print n2;
+print n3;
+
+print n1 == n2;
+print n2 == n3;
+print n1 == n3;

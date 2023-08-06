@@ -158,5 +158,5 @@ class Lexer(
         )
     }
 
-    private fun Char.isAlphaNumeric(): Boolean = this in 'a'..'z' || this in 'A'..'Z' || this == '_'
+    private fun Char.isAlphaNumeric(): Boolean = this in 'a'..'z' || this in 'A'..'Z' || this == '_' || this in '0' .. '9'
 }
