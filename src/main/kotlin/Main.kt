@@ -35,6 +35,7 @@ fun String.eval(): Boolean {
     val parser = Parser(lexer.tokens)
     val ast = parser.parse()
 
+    Resolver.resolve(ast)
     Interpreter.interpret(ast)
 
     return false

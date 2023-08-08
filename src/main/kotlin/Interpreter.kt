@@ -1,6 +1,7 @@
 object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
     val globals: Environment = Environment()
     private var environment: Environment = globals
+    private var locals: MutableMap<ExprAST, Int> = mutableMapOf()
 
     init {
         globals["clock"] = object : LoxCallable {
@@ -21,6 +22,10 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
         }
     }
 
+    fun resolve(expr: ExprAST, depth: Int) {
+        this.locals[expr] = depth
+    }
+
     fun executeBlock(statements: List<StmtAST?>, environment: Environment) {
         val previous = this.environment
         try {
@@ -32,6 +37,12 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
         } finally {
             this.environment = previous
         }
+    }
+
+    private fun lookUpVariable(name: Token, expr: ExprAST): Any? {
+        return this.locals[expr]?.let {
+            this.environment.getAt(it, name.lexeme)
+        } ?: this.globals[name]
     }
 
     private fun StmtAST.execute() {
@@ -142,13 +153,19 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             }
 
             is Variable -> {
-                environment[ast.name]
+                lookUpVariable(ast.name, ast)
             }
 
             is Assign -> {
-                ast.expression.evaluate().also {
-                    environment[ast.name] = it
+                val value = ast.expression.evaluate()
+
+                this.locals[ast]?.let {
+                    this.environment.assignAt(it, ast.name, value)
+                } ?: run {
+                    this.globals[ast.name] = value
                 }
+
+                value
             }
         }
     }

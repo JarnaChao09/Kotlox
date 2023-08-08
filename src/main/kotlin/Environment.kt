@@ -20,4 +20,21 @@ class Environment(
             this.enclosing?.get(name) ?: throw RuntimeException("Undefined variable '${name.lexeme}' @ ${name.line}")
         }
     }
+
+    fun getAt(distance: Int, name: String): Any? {
+        return this.ancestor(distance).env[name]
+    }
+
+    fun assignAt(distance: Int, name: Token, value: Any?) {
+        this.ancestor(distance).env[name.lexeme] = value
+    }
+
+    fun ancestor(distance: Int): Environment {
+        var env = this
+        for (i in 0..<distance) {
+            env = env.enclosing!!
+        }
+
+        return env
+    }
 }
