@@ -37,4 +37,8 @@ class Environment(
 
         return env
     }
+
+    override fun toString(): String {
+        return "${this.env} -> ${this.enclosing}"
+    }
 }

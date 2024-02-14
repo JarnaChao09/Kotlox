@@ -40,7 +40,7 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                 ast.expr.resolve()
             }
             is Variable -> {
-                if (scopes.isNotEmpty() && scopes.first()[ast.name.lexeme] == false) {
+                if (scopes.isNotEmpty() && scopes.last()[ast.name.lexeme] == false) {
                     error("Can not read local variable in variable's own initializer")
                 }
 
@@ -95,21 +95,23 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
     }
 
     private fun beginScope() {
-        scopes.addFirst(mutableMapOf())
+        scopes.addLast(mutableMapOf())
     }
 
     private fun endScope() {
-        scopes.removeFirst()
+        scopes.removeLast()
     }
 
     private fun resolveLocal(expr: ExprAST, name: Token) {
-        for (i in scopes.size downTo 0) {
+        for (i in scopes.indices.reversed()) {
             if (name.lexeme in scopes[i]) {
                 Interpreter.resolve(expr, scopes.size - 1 - i)
+                return
             }
         }
     }
 
+    @JvmName("privateResolve")
     private fun List<StmtAST?>.resolve() {
         this.forEach {
             it.resolve()
@@ -125,7 +127,7 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
     }
 
     private fun Token.declare() {
-        scopes.firstOrNull()?.let {
+        scopes.lastOrNull()?.let {
             if (this.lexeme in it) {
                 error("Variable ${this.lexeme} already declared in scope")
             }
@@ -134,7 +136,7 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
     }
 
     private fun Token.define() {
-        scopes.firstOrNull()?.let {
+        scopes.lastOrNull()?.let {
             it[this.lexeme] = true
         }
     }
