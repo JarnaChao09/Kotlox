@@ -1,5 +1,3 @@
-import kotlin.system.exitProcess
-
 class Parser(private val tokens: List<Token>) {
     private var current = 0
 
@@ -14,6 +12,7 @@ class Parser(private val tokens: List<Token>) {
     private fun declaration(): StmtAST? {
         return try {
             when {
+                match(TokenType.CLASS) -> classDeclaration()
                 match(TokenType.VAR, TokenType.VAL) -> variableDeclaration()
                 match(TokenType.FUN) -> functionDeclaration("function")
                 else -> statement()
@@ -22,6 +21,21 @@ class Parser(private val tokens: List<Token>) {
             println("[ERROR]: ${err.message}")
             null
         }
+    }
+
+    private fun classDeclaration(): StmtAST {
+        val name = expect(TokenType.IDENTIFIER, "Expected class name.")
+        expect(TokenType.LEFT_BRACE, "Expected '{' before a class body.")
+
+        val methods = buildList {
+            while (!checkCurrent(TokenType.RIGHT_BRACE) && !this@Parser.isAtEnd()) {
+                add(functionDeclaration("method"))
+            }
+        }
+
+        expect(TokenType.RIGHT_BRACE, "Expected '}' after class body.")
+
+        return Class(name, methods)
     }
 
     private fun variableDeclaration(): StmtAST {
@@ -57,7 +71,7 @@ class Parser(private val tokens: List<Token>) {
         }
     }
 
-    private fun functionDeclaration(kind: String): StmtAST {
+    private fun functionDeclaration(kind: String): Function {
         val name = expect(TokenType.IDENTIFIER, "Expect $kind name")
         expect(TokenType.LEFT_PAREN, "Expect '(' after $kind name")
         val parameters = buildList {
@@ -189,6 +203,8 @@ class Parser(private val tokens: List<Token>) {
             if (expr is Variable) {
                 val name = expr.name
                 return Assign(name, value)
+            } else if (expr is Get) {
+                return Set(expr.instance, expr.name, value)
             }
 
             // todo: don't throw here when parser synchronization is implemented
@@ -285,6 +301,9 @@ class Parser(private val tokens: List<Token>) {
         while (true) {
             if (match(TokenType.LEFT_PAREN)) {
                 expr = finishCall(expr)
+            } else if (match(TokenType.DOT)) {
+                val name = expect(TokenType.IDENTIFIER, "Expected property name after '.'.")
+                expr = Get(expr, name)
             } else {
                 break
             }
@@ -313,6 +332,7 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.TRUE) -> Literal(true)
             match(TokenType.FALSE) -> Literal(false)
             match(TokenType.NULL) -> Literal(null)
+            match(TokenType.THIS) -> This(this.previous())
             match(TokenType.IDENTIFIER) -> Variable(this.previous())
             match(TokenType.NUMBER, TokenType.STRING) -> Literal(this.previous().literal)
             match(TokenType.LEFT_PAREN) -> {

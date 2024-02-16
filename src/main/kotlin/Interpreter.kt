@@ -1,7 +1,7 @@
 object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
     val globals: Environment = Environment()
     private var environment: Environment = globals
-    private var locals: MutableMap<ExprAST, Int> = mutableMapOf()
+    var locals: MutableMap<ExprAST, Int> = mutableMapOf()
 
     init {
         globals["clock"] = object : LoxCallable {
@@ -78,11 +78,13 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                     is Double -> error("Illegal type for right hand side, expected String")
                     else -> error("Illegal type for right hand side, expected String")
                 }
+
                 is Double -> when (r) {
                     is String -> error("Illegal type for right hand side, expected Double")
                     is Double -> l + r
                     else -> error("Illegal Type for right hande side, expected Double")
                 }
+
                 else -> error("Illegal Type for left hand side, expected (String | Double)")
             }
         },
@@ -122,6 +124,15 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                 return callee(this, arguments)
             }
 
+            is Get -> {
+                val obj = ast.instance.evaluate()
+                if (obj is LoxInstance) {
+                    return obj[ast.name]
+                }
+
+                throw RuntimeException("Only instances have properties")
+            }
+
             is Grouping -> {
                 ast.expr.evaluate()
             }
@@ -144,6 +155,22 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                 }
 
                 ast.right.evaluate()
+            }
+
+            is Set -> {
+                val obj = ast.instance.evaluate()
+
+                if (obj !is LoxInstance) {
+                    throw RuntimeException("Only instances have fields.")
+                }
+
+                val value = ast.value.evaluate()
+                obj[ast.name] = value
+                return value
+            }
+
+            is This -> {
+                lookUpVariable(ast.keyword, ast)
             }
 
             is Unary -> {
@@ -172,12 +199,30 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
 
     override fun visit(ast: StmtAST) {
         when (ast) {
+            is Block -> {
+                executeBlock(ast.statements, Environment(environment))
+            }
+
+            is Class -> {
+                environment[ast.name.lexeme] = null
+
+                val methods = buildMap {
+                    ast.methods.forEach {
+                        val function = LoxFunction(it, environment, it.name.lexeme == "init")
+                        put(it.name.lexeme, function)
+                    }
+                }
+
+                val klass = LoxClass(ast.name.lexeme, methods)
+                environment[ast.name] = klass
+            }
+
             is Expression -> {
                 ast.expr.evaluate()
             }
 
             is Function -> {
-                val function = LoxFunction(ast, environment)
+                val function = LoxFunction(ast, environment, false)
                 environment[ast.name.lexeme] = function
             }
 
@@ -187,10 +232,6 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
 
             is VarStmt -> {
                 environment[ast.name.lexeme] = ast.initializer?.evaluate()
-            }
-
-            is Block -> {
-                executeBlock(ast.statements, Environment(environment))
             }
 
             is If -> {

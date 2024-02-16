@@ -1,11 +1,19 @@
 object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
     private enum class FunctionType {
         NONE,
-        FUNCTION
+        FUNCTION,
+        INITIALIZER,
+        METHOD,
+    }
+
+    private enum class ClassType {
+        NONE,
+        CLASS,
     }
 
     private val scopes: ArrayDeque<MutableMap<String, Boolean>> = ArrayDeque()
     private var currentFunctionType: FunctionType = FunctionType.NONE
+    private var currentClassType: ClassType = ClassType.NONE
 
     fun resolve(statements: List<StmtAST?>) {
         statements.resolve()
@@ -17,10 +25,12 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                 ast.expression.resolve()
                 resolveLocal(ast, ast.name)
             }
+
             is Binary -> {
                 ast.left.resolve()
                 ast.right.resolve()
             }
+
             is Call -> {
                 ast.callee.resolve()
 
@@ -28,17 +38,37 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                     it.resolve()
                 }
             }
+
+            is Get -> {
+                ast.instance.resolve()
+            }
+
             is Grouping -> {
                 ast.expr.resolve()
             }
+
             is Literal -> {}
             is Logical -> {
                 ast.left.resolve()
                 ast.right.resolve()
             }
+
+            is Set -> {
+                ast.value.resolve()
+                ast.instance.resolve()
+            }
+
+            is This -> {
+                if (currentClassType == ClassType.NONE) {
+                    error("Can't use 'this' outside of a class.")
+                }
+                resolveLocal(ast, ast.keyword)
+            }
+
             is Unary -> {
                 ast.expr.resolve()
             }
+
             is Variable -> {
                 if (scopes.isNotEmpty() && scopes.last()[ast.name.lexeme] == false) {
                     error("Can not read local variable in variable's own initializer")
@@ -56,30 +86,65 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                 ast.statements.resolve()
                 endScope()
             }
+
+            is Class -> {
+                val enclosingClass = currentClassType
+                currentClassType = ClassType.CLASS
+
+                ast.name.declare()
+                ast.name.define()
+
+                beginScope()
+                scopes.last()["this"] = true
+
+                ast.methods.forEach {
+                    val declaration = if (it.name.lexeme == "init") {
+                        FunctionType.INITIALIZER
+                    } else {
+                        FunctionType.METHOD
+                    }
+                    it.resolveFunction(declaration)
+                }
+
+                endScope()
+
+                currentClassType = enclosingClass
+            }
+
             is Expression -> {
                 ast.expr.resolve()
             }
+
             is Function -> {
                 ast.name.declare()
                 ast.name.define()
 
                 ast.resolveFunction(FunctionType.FUNCTION)
             }
+
             is If -> {
                 ast.condition.resolve()
                 ast.trueBranch.resolve()
                 ast.falseBranch?.resolve()
             }
+
             is Print -> {
                 ast.expr.resolve()
             }
+
             is Return -> {
                 if (this.currentFunctionType == FunctionType.NONE) {
                     error("Top level return is not allowed")
                 }
-                
-                ast.value?.resolve()
+
+                ast.value?.let {
+                    if (currentFunctionType == FunctionType.INITIALIZER) {
+                        error("Can't return a value from an initializer")
+                    }
+                    it.resolve()
+                }
             }
+
             is VarStmt -> {
                 ast.name.declare()
                 ast.initializer?.let {
@@ -87,6 +152,7 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                 }
                 ast.name.define()
             }
+
             is While -> {
                 ast.condition.resolve()
                 ast.body.resolve()

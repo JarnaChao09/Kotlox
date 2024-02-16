@@ -14,11 +14,17 @@ data class Binary(val left: ExprAST, val operator: Token, val right: ExprAST) : 
 
 data class Call(val callee: ExprAST, val paren: Token, val arguments: List<ExprAST>) : ExprAST
 
+data class Get(val instance: ExprAST, val name: Token) : ExprAST
+
 data class Grouping(val expr: ExprAST) : ExprAST
 
 data class Literal(val value: Any?) : ExprAST
 
 data class Logical(val left: ExprAST, val operator: Token, val right: ExprAST) : ExprAST
+
+data class Set(val instance: ExprAST, val name: Token, val value: ExprAST) : ExprAST
+
+data class This(val keyword: Token) : ExprAST
 
 data class Unary(val operator: Token, val expr: ExprAST) : ExprAST
 
@@ -35,6 +41,8 @@ sealed interface StmtAST {
 }
 
 data class Block(val statements: List<StmtAST?>) : StmtAST
+
+data class Class(val name: Token, val methods: List<Function>) : StmtAST
 
 data class Expression(val expr: ExprAST) : StmtAST
 
