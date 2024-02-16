@@ -1,7 +1,7 @@
 object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
     val globals: Environment = Environment()
     private var environment: Environment = globals
-    var locals: MutableMap<ExprAST, Int> = mutableMapOf()
+    private var locals: MutableMap<ExprAST, Int> = mutableMapOf()
 
     init {
         globals["clock"] = object : LoxCallable {
