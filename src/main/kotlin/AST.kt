@@ -24,6 +24,8 @@ data class Logical(val left: ExprAST, val operator: Token, val right: ExprAST) :
 
 data class Set(val instance: ExprAST, val name: Token, val value: ExprAST) : ExprAST
 
+data class Super(val keyword: Token, val method: Token) : ExprAST
+
 data class This(val keyword: Token) : ExprAST
 
 data class Unary(val operator: Token, val expr: ExprAST) : ExprAST
@@ -42,7 +44,7 @@ sealed interface StmtAST {
 
 data class Block(val statements: List<StmtAST?>) : StmtAST
 
-data class Class(val name: Token, val methods: List<Function>) : StmtAST
+data class Class(val name: Token, val superClass: Variable?, val methods: List<Function>) : StmtAST
 
 data class Expression(val expr: ExprAST) : StmtAST
 

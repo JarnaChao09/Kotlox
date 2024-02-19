@@ -25,6 +25,14 @@ class Parser(private val tokens: List<Token>) {
 
     private fun classDeclaration(): StmtAST {
         val name = expect(TokenType.IDENTIFIER, "Expected class name.")
+
+        val superClass = if (match(TokenType.LT)) {
+            expect(TokenType.IDENTIFIER, "Expected superclass name.")
+            Variable(previous())
+        } else {
+            null
+        }
+
         expect(TokenType.LEFT_BRACE, "Expected '{' before a class body.")
 
         val methods = buildList {
@@ -35,7 +43,7 @@ class Parser(private val tokens: List<Token>) {
 
         expect(TokenType.RIGHT_BRACE, "Expected '}' after class body.")
 
-        return Class(name, methods)
+        return Class(name, superClass, methods)
     }
 
     private fun variableDeclaration(): StmtAST {
@@ -332,6 +340,12 @@ class Parser(private val tokens: List<Token>) {
             match(TokenType.TRUE) -> Literal(true)
             match(TokenType.FALSE) -> Literal(false)
             match(TokenType.NULL) -> Literal(null)
+            match(TokenType.SUPER) -> {
+                val keyword = previous()
+                expect(TokenType.DOT, "Expect '.' after 'super'.")
+                val method = expect(TokenType.IDENTIFIER, "Expect superclass method name")
+                Super(keyword, method)
+            }
             match(TokenType.THIS) -> This(this.previous())
             match(TokenType.IDENTIFIER) -> Variable(this.previous())
             match(TokenType.NUMBER, TokenType.STRING) -> Literal(this.previous().literal)

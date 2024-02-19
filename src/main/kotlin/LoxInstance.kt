@@ -3,7 +3,7 @@ data class LoxInstance(val klass: LoxClass) {
 
     operator fun get(name: Token): Any? {
         return fields[name.lexeme] ?: run {
-            klass.methods[name.lexeme]?.bind(this) ?: RuntimeException("Undefined property '${name.lexeme}'.")
+            klass.findMethod(name.lexeme)?.bind(this) ?: RuntimeException("Undefined property '${name.lexeme}'.")
         }
     }
 

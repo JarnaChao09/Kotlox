@@ -169,6 +169,17 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                 return value
             }
 
+            is Super -> {
+                val distance = locals[ast]!!
+                val superClass = environment.getAt(distance, "super") as LoxClass
+
+                val obj = environment.getAt(distance - 1, "this") as LoxInstance
+
+                val method = superClass.findMethod(ast.method.lexeme) ?: error("Undefined property '${ast.method.lexeme}'.")
+
+                return method.bind(obj)
+            }
+
             is This -> {
                 lookUpVariable(ast.keyword, ast)
             }
@@ -204,7 +215,24 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
             }
 
             is Class -> {
+                val superClass = ast.superClass?.let { sc ->
+                    sc.evaluate().let {
+                        if (it !is LoxClass) {
+                            error("Superclass must be a class")
+                        } else {
+                            it
+                        }
+                    }
+                }
+
                 environment[ast.name.lexeme] = null
+
+                val previousEnvironment = ast.superClass?.let {
+                    val enclosing = environment
+                    environment = Environment(environment)
+                    environment["super"] = superClass
+                    enclosing
+                }
 
                 val methods = buildMap {
                     ast.methods.forEach {
@@ -213,7 +241,12 @@ object Interpreter : ExprAST.Visitor<Any?>, StmtAST.Visitor<Unit> {
                     }
                 }
 
-                val klass = LoxClass(ast.name.lexeme, methods)
+                val klass = LoxClass(ast.name.lexeme, superClass, methods)
+
+                previousEnvironment?.let {
+                    environment = it
+                }
+
                 environment[ast.name] = klass
             }
 

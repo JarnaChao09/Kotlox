@@ -9,6 +9,7 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
     private enum class ClassType {
         NONE,
         CLASS,
+        SUBCLASS,
     }
 
     private val scopes: ArrayDeque<MutableMap<String, Boolean>> = ArrayDeque()
@@ -58,6 +59,15 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                 ast.instance.resolve()
             }
 
+            is Super -> {
+                if (currentClassType == ClassType.NONE) {
+                    error("Can't use 'super' outside of a class.")
+                } else if (currentClassType != ClassType.SUBCLASS) {
+                    error("Can't use 'super' in a class with no superclass")
+                }
+                resolveLocal(ast, ast.keyword)
+            }
+
             is This -> {
                 if (currentClassType == ClassType.NONE) {
                     error("Can't use 'this' outside of a class.")
@@ -94,6 +104,19 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                 ast.name.declare()
                 ast.name.define()
 
+                ast.superClass?.let {
+                    if (ast.name.lexeme == it.name.lexeme) {
+                        error("A class can't inherit from itself")
+                    }
+                    currentClassType = ClassType.SUBCLASS
+                    it.resolve()
+                }
+
+                ast.superClass?.let {
+                    beginScope()
+                    scopes.last()["super"] = true
+                }
+
                 beginScope()
                 scopes.last()["this"] = true
 
@@ -107,6 +130,10 @@ object Resolver : ExprAST.Visitor<Unit>, StmtAST.Visitor<Unit> {
                 }
 
                 endScope()
+
+                ast.superClass?.let {
+                    endScope()
+                }
 
                 currentClassType = enclosingClass
             }
