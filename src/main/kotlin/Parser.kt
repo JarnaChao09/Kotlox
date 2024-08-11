@@ -398,7 +398,7 @@ class Parser(private val tokens: List<Token>) {
         return if (this.checkCurrent(type)) {
             advance()
         } else {
-            error(message)
+            error("$message on line ${this.peek().line}")
         }
     }
 }

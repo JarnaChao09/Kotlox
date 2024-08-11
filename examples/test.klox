@@ -1,0 +1,5 @@
+// Temporary klox data
+var a = "Hello"
+print a;
+a = "World!"
+print a;
